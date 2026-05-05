@@ -14,16 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      financial_entries: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          department: Database["public"]["Enums"]["department_code"]
+          end_date: string
+          id: string
+          is_forecast: boolean
+          kind: Database["public"]["Enums"]["entry_kind"]
+          note: string | null
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          department: Database["public"]["Enums"]["department_code"]
+          end_date: string
+          id?: string
+          is_forecast?: boolean
+          kind: Database["public"]["Enums"]["entry_kind"]
+          note?: string | null
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_code"]
+          end_date?: string
+          id?: string
+          is_forecast?: boolean
+          kind?: Database["public"]["Enums"]["entry_kind"]
+          note?: string | null
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: Database["public"]["Enums"]["department_code"] | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_code"] | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: Database["public"]["Enums"]["department_code"] | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_department: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["department_code"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member"
+      department_code: "financial" | "sales" | "support" | "rnd" | "production"
+      entry_kind: "deposit" | "payment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +245,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member"],
+      department_code: ["financial", "sales", "support", "rnd", "production"],
+      entry_kind: ["deposit", "payment"],
+    },
   },
 } as const
