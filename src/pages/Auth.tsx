@@ -39,7 +39,7 @@ export default function Auth() {
     const r = signInSchema.safeParse(si);
     if (!r.success) return toast.error(r.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword(r.data);
+    const { error } = await supabase.auth.signInWithPassword({ email: r.data.email, password: r.data.password });
     setBusy(false);
     if (error) return toast.error("ورود ناموفق: " + error.message);
     toast.success("خوش آمدید");
