@@ -128,7 +128,7 @@ export function DepartmentCharts({ department }: { department: DepartmentCode })
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => formatNumber(v)} />
-              <Tooltip contentStyle={tooltipStyle()} formatter={(v: number) => formatToman(v)} />
+              <Tooltip cursor={false} contentStyle={tooltipStyle()} formatter={(v: number) => formatToman(v)} />
               <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                 {paymentData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
               </Bar>
