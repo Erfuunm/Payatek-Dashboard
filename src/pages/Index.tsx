@@ -6,12 +6,14 @@ import { DEPARTMENTS, departmentLabel, type DepartmentCode } from "@/lib/departm
 import { DepartmentCharts } from "@/components/DepartmentCharts";
 import { EntryPanel } from "@/components/EntryPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, ShieldCheck, Plus } from "lucide-react";
 
 export default function Dashboard() {
   const { user, loading, profile, isAdmin } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeDept, setActiveDept] = useState<DepartmentCode>("financial");
+  const [openEntry, setOpenEntry] = useState(false);
 
   if (!loading && !user) return <Navigate to="/auth" replace />;
 
@@ -52,22 +54,31 @@ export default function Dashboard() {
             </Tabs>
           </section>
         ) : profile?.department ? (
-          <section className="grid gap-6 lg:grid-cols-[420px_1fr]">
-            <div>
+          <section className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <PageTitle
                 icon={<Building2 className="h-6 w-6" />}
                 title={departmentLabel(profile.department)}
-                subtitle="ثبت اطلاعات و مشاهده وضعیت واحد شما"
+                subtitle="نمای کلی، نمودارها و ثبت اطلاعات واحد شما"
               />
-              <EntryPanel
-                department={profile.department}
-                userId={user!.id}
-                onSaved={() => setRefreshKey((k) => k + 1)}
-              />
+              <Button
+                onClick={() => setOpenEntry(true)}
+                size="lg"
+                className="gradient-primary text-primary-foreground hover:opacity-95 shadow-[var(--shadow-elegant)]"
+              >
+                <Plus className="ml-2 h-5 w-5" /> ثبت رکورد جدید
+              </Button>
             </div>
             <div key={refreshKey}>
               <DepartmentCharts department={profile.department} />
             </div>
+            <EntryPanel
+              department={profile.department}
+              userId={user!.id}
+              open={openEntry}
+              onOpenChange={setOpenEntry}
+              onSaved={() => setRefreshKey((k) => k + 1)}
+            />
           </section>
         ) : (
           <div className="card-elegant grid place-items-center px-6 py-16 text-center">
