@@ -1,0 +1,46 @@
+import { useMemo, useState } from "react";
+import { Building2, CalendarDays, ClipboardList, Factory, Plus, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProductionCharts } from "./ProductionCharts";
+import { ProductionForecastDialog } from "./ProductionForecastDialog";
+import { ProductionEntryPanel, type ProductionEntryRecord } from "./ProductionEntryPanel";
+import { ProductionTaskPanel, type ProductionTaskRecord } from "./ProductionTaskPanel";
+import { ProductionTaskUpdatePanel } from "./ProductionTaskUpdatePanel";
+import { ProductionRecordList } from "./ProductionRecordList";
+import { ProductionGantt } from "./ProductionGantt";
+
+type ActiveTab = "entries" | "tasks" | "gantt";
+const MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+
+export function ProductionDashboard() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("entries");
+  const [openForecast, setOpenForecast] = useState(false);
+  const [openEntry, setOpenEntry] = useState(false);
+  const [openTask, setOpenTask] = useState(false);
+  const [openTaskUpdate, setOpenTaskUpdate] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<ProductionEntryRecord | null>(null);
+  const [editingTask, setEditingTask] = useState<ProductionTaskRecord | null>(null);
+  const [reportingTask, setReportingTask] = useState<ProductionTaskRecord | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [year, setYear] = useState("1405");
+  const [month, setMonth] = useState("1");
+  const [period, setPeriod] = useState("1");
+  const refresh = () => setRefreshKey((k) => k + 1);
+  const periodTitle = useMemo(() => { const monthLabel = MONTHS[Number(month) - 1] ?? `ماه ${month}`; const periodLabel = period === "1" ? "دهه اول" : period === "2" ? "دهه دوم" : "دهه سوم"; return `${year} — ${monthLabel} — ${periodLabel}`; }, [year, month, period]);
+  const openNewEntry = () => { setEditingEntry(null); setOpenEntry(true); };
+  const openNewTask = () => { setEditingTask(null); setOpenTask(true); };
+  const openReport = (task: ProductionTaskRecord) => { setReportingTask(task); setOpenTaskUpdate(true); };
+
+  return <div className="space-y-6" dir="rtl">
+    <section className="card-elegant overflow-hidden rounded-3xl border border-border/70 bg-card/80"><div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between"><div className="flex items-start gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl gradient-primary text-primary-foreground shadow-[var(--shadow-elegant)]"><Building2 className="h-6 w-6" /></div><div><h1 className="text-2xl font-extrabold text-foreground">واحد تولید</h1><p className="mt-1 text-sm text-muted-foreground">پیش‌بینی تولید، ثبت تولید واقعی و مدیریت کارها با گانت چارت</p><div className="mt-3 inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/25 px-3 py-1 text-xs text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" />{periodTitle}</div></div></div><div className="grid gap-2 sm:grid-cols-3 lg:min-w-[520px]"><Button size="lg" variant="outline" onClick={() => setOpenForecast(true)} className="justify-center border-border/80 bg-background/40 hover:bg-muted/40"><Target className="ml-2 h-5 w-5" />پیش‌بینی تولید</Button><Button size="lg" variant="outline" onClick={openNewTask} className="justify-center border-border/80 bg-background/40 hover:bg-muted/40"><ClipboardList className="ml-2 h-5 w-5" />ثبت کار تولید</Button><Button size="lg" className="justify-center gradient-primary shadow-[var(--shadow-elegant)]" onClick={openNewEntry}><Plus className="ml-2 h-5 w-5" />ثبت تولید</Button></div></div></section>
+    <section className="card-elegant rounded-2xl border border-border/70 bg-card/80 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground"><CalendarDays className="h-4 w-4 text-primary" />فیلتر دوره گزارش</div><div className="grid gap-3 sm:grid-cols-3 lg:max-w-3xl"><Field label="سال"><input type="number" value={year} onChange={(e) => setYear(e.target.value)} className="h-10 w-full rounded-lg border border-input bg-background/70 px-3 text-foreground outline-none transition focus:border-primary" /></Field><Field label="ماه"><select value={month} onChange={(e) => setMonth(e.target.value)} className="h-10 w-full rounded-lg border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary">{MONTHS.map((name, i) => <option key={name} value={String(i + 1)}>{name}</option>)}</select></Field><Field label="دوره"><select value={period} onChange={(e) => setPeriod(e.target.value)} className="h-10 w-full rounded-lg border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary"><option value="1">دهه اول (۱–۱۰)</option><option value="2">دهه دوم (۱۱–۲۰)</option><option value="3">دهه سوم (۲۱–آخر)</option></select></Field></div></section>
+    <ProductionCharts key={`production-chart-${refreshKey}`} year={year} month={month} period={period} />
+    <section className="card-elegant rounded-2xl border border-border/70 bg-card/80 p-4"><Tabs dir="rtl" value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)}><TabsList className="mb-4 grid h-auto w-full grid-cols-3 gap-2 bg-muted/40 p-1"><TabsTrigger value="entries" className="py-3"><Factory className="ml-2 h-4 w-4" />تولیدهای ثبت‌شده</TabsTrigger><TabsTrigger value="tasks" className="py-3"><ClipboardList className="ml-2 h-4 w-4" />کارهای تولید</TabsTrigger><TabsTrigger value="gantt" className="py-3"><CalendarDays className="ml-2 h-4 w-4" />گانت</TabsTrigger></TabsList><TabsContent value="entries"><ProductionRecordList type="entries" year={year} month={month} period={period} refreshKey={refreshKey} onChanged={refresh} onEditEntry={(item) => { setEditingEntry(item); setOpenEntry(true); }} /></TabsContent><TabsContent value="tasks"><ProductionRecordList type="tasks" year={year} month={month} period={period} refreshKey={refreshKey} onChanged={refresh} onEditTask={(item) => { setEditingTask(item); setOpenTask(true); }} onUpdateTask={openReport} /></TabsContent><TabsContent value="gantt"><ProductionGantt year={year} month={month} period={period} refreshKey={refreshKey} /></TabsContent></Tabs></section>
+    <ProductionForecastDialog open={openForecast} onOpenChange={setOpenForecast} year={year} month={month} period={period} onSaved={refresh} />
+    <ProductionEntryPanel open={openEntry} item={editingEntry} year={year} month={month} period={period} onOpenChange={setOpenEntry} onSaved={refresh} />
+    <ProductionTaskPanel open={openTask} item={editingTask} year={year} month={month} period={period} onOpenChange={setOpenTask} onSaved={refresh} />
+    <ProductionTaskUpdatePanel open={openTaskUpdate} task={reportingTask} onOpenChange={setOpenTaskUpdate} onSaved={refresh} />
+  </div>;
+}
+function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="space-y-1.5"><span className="text-xs font-medium text-muted-foreground">{label}</span>{children}</label>; }

@@ -13,9 +13,16 @@ import { SupportDashboard } from "@/components/support/SupportDashboard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+
 import { SupportAdminOverviewChart } from "@/components/support/SupportAdminOverviewChart";
 import { SalesAdminOverviewChart } from "@/components/sales/SalesAdminOverviewChart";
 import { SalesDashboard } from "@/components/sales/SalesDashboard";
+
+import { ProductionDashboard } from "@/components/production/ProductionDashboard";
+import { ProductionAdminOverviewChart } from "@/components/production/ProductionAdminOverviewChart";
+
+import { RndDashboard } from "@/components/rnd/RndDashboard";
+import { RndAdminOverviewChart } from "@/components/rnd/RndAdminOverviewChart";
 
 export default function Dashboard() {
   const { user, loading, profile, isAdmin } = useAuth();
@@ -101,13 +108,17 @@ function AdminDashboard({
         </TabsList>
       </Tabs>
 
-{activeDept === "support" ? (
-  <SupportAdminOverviewChart year="1405" />
-) : activeDept === "sales" ? (
-  <SalesAdminOverviewChart year="1405" />
-) : (
-  <AdminOverviewChart department={activeDept} year="1405" />
-)}
+      {activeDept === "support" ? (
+        <SupportAdminOverviewChart year="1405" />
+      ) : activeDept === "sales" ? (
+        <SalesAdminOverviewChart year="1405" />
+      ) : activeDept === "production" ? (
+        <ProductionAdminOverviewChart year="1405" />
+      ) : activeDept === "rnd" ? (
+        <RndAdminOverviewChart year="1405" />
+      ) : (
+        <AdminOverviewChart department={activeDept} year="1405" />
+      )}
 
       <div className="border-t border-border pt-8">
         <PageTitle
@@ -149,13 +160,18 @@ function UserDashboard({
   onOpenEntryChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
-if (department === "support" || department === "sales") {
-  return (
-    <section className="space-y-6">
-      <DepartmentView department={department} mode="user" />
-    </section>
-  );
-}
+  if (
+    department === "support" ||
+    department === "sales" ||
+    department === "production" ||
+    department === "rnd"
+  ) {
+    return (
+      <section className="space-y-6">
+        <DepartmentView department={department} mode="user" />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
@@ -203,7 +219,6 @@ function DepartmentView({
   mode: "admin" | "user";
 }) {
   const isAdmin = mode === "admin";
-  debugger
 
   switch (department) {
     case "support":
@@ -211,6 +226,12 @@ function DepartmentView({
 
     case "sales":
       return <SalesDashboard />;
+
+    case "production":
+      return <ProductionDashboard />;
+
+    case "rnd":
+      return <RndDashboard />;
 
     default:
       return (
