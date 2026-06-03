@@ -1,6 +1,15 @@
-export type DepartmentCode = "financial" | "sales" | "support" | "rnd" | "production";
+export type DepartmentCode =
+  | "financial"
+  | "sales"
+  | "support"
+  | "rnd"
+  | "production";
 
-export const DEPARTMENTS: { code: DepartmentCode; label: string; description: string }[] = [
+export const DEPARTMENTS: {
+  code: DepartmentCode;
+  label: string;
+  description: string;
+}[] = [
   { code: "financial", label: "واحد مالی", description: "دریافت‌ها، پرداخت‌ها و موجودی" },
   { code: "sales", label: "واحد فروش", description: "فروش، سفارشات و مشتریان" },
   { code: "support", label: "واحد پشتیبانی", description: "تیکت‌ها و خدمات پس از فروش" },
@@ -11,33 +20,112 @@ export const DEPARTMENTS: { code: DepartmentCode; label: string; description: st
 export const departmentLabel = (code: DepartmentCode | null | undefined) =>
   DEPARTMENTS.find((d) => d.code === code)?.label ?? "—";
 
-// دسته‌بندی‌های واحد مالی
-export const FINANCE_DEPOSIT_CATEGORIES = [
-  "گوشواره، پروتزها، چاپگرها",
-  "تسهیلات",
-  "پشتیبانی",
-  "تأسیسات / وام",
-];
 
-export const FINANCE_PAYMENT_CATEGORIES = [
-  "پروتز اورتز",
-  "پرینتر",
-  "تیسولز",
-  "اداری",
-  "عمومی",
-  "دفاتر خارجی",
-];
+/* -------------------------------- */
+/* دسته‌بندی‌های هر دپارتمان */
+/* -------------------------------- */
 
-// دسته‌های پیش‌فرض برای سایر واحدها
-export const DEFAULT_DEPOSIT_CATEGORIES = ["دریافت اصلی", "متفرقه"];
-export const DEFAULT_PAYMENT_CATEGORIES = ["پرداخت اصلی", "متفرقه"];
-
-export function getCategories(dep: DepartmentCode, kind: "deposit" | "payment") {
-  if (dep === "financial") {
-    return kind === "deposit" ? FINANCE_DEPOSIT_CATEGORIES : FINANCE_PAYMENT_CATEGORIES;
+export const DEPARTMENT_CATEGORIES: Record<
+  DepartmentCode,
+  {
+    deposit: string[];
+    payment: string[];
   }
-  return kind === "deposit" ? DEFAULT_DEPOSIT_CATEGORIES : DEFAULT_PAYMENT_CATEGORIES;
+> = {
+
+  financial: {
+    deposit: [
+      "ارتز پروتز",
+      "پرینتر",
+      "تسهیلات",
+      "تیسولز",
+      "پشتیبانی",
+      "وام",
+    ],
+    payment: [
+      "ارتز پروتز",
+      "پرینتر",
+      "تیسولز",
+      "عمومی",
+      "دفاتر خارجی",
+    ],
+  },
+
+  sales: {
+    deposit: [
+      "فروش نقدی",
+      "فروش آنلاین",
+      "قراردادها",
+      "متفرقه",
+    ],
+    payment: [
+      "پورسانت فروش",
+      "تبلیغات",
+      "بازاریابی",
+      "متفرقه",
+    ],
+  },
+
+  support: {
+    deposit: [
+      "قرارداد پشتیبانی",
+      "تمدید خدمات",
+      "متفرقه",
+    ],
+    payment: [
+      "هزینه نیرو پشتیبانی",
+      "ابزار پشتیبانی",
+      "سرور و زیرساخت",
+      "متفرقه",
+    ],
+  },
+
+  rnd: {
+    deposit: [
+      "بودجه تحقیقاتی",
+      "سرمایه گذاری",
+      "متفرقه",
+    ],
+    payment: [
+      "حقوق تیم تحقیق",
+      "خرید تجهیزات",
+      "نمونه سازی",
+      "متفرقه",
+    ],
+  },
+
+  production: {
+    deposit: [
+      "فروش محصول",
+      "سفارش کارخانه",
+      "متفرقه",
+    ],
+    payment: [
+      "مواد اولیه",
+      "حقوق کارگران",
+      "نگهداری دستگاه",
+      "متفرقه",
+    ],
+  },
+
+};
+
+
+/* -------------------------------- */
+/* گرفتن دسته‌بندی بر اساس دپارتمان */
+/* -------------------------------- */
+
+export function getCategories(
+  dep: DepartmentCode,
+  kind: "deposit" | "payment"
+) {
+  return DEPARTMENT_CATEGORIES[dep]?.[kind] ?? [];
 }
+
+
+/* -------------------------------- */
+/* فرمت اعداد */
+/* -------------------------------- */
 
 export const formatToman = (n: number) =>
   new Intl.NumberFormat("fa-IR").format(Math.round(n)) + " تومان";

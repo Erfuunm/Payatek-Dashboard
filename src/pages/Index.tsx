@@ -1,105 +1,258 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Building2, Plus, ShieldCheck } from "lucide-react";
+
 import { AppHeader } from "@/components/AppHeader";
-import { useAuth } from "@/hooks/useAuth";
 import { DEPARTMENTS, departmentLabel, type DepartmentCode } from "@/lib/departments";
 import { DepartmentCharts } from "@/components/DepartmentCharts";
 import { EntryPanel } from "@/components/EntryPanel";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AdminOverviewChart } from "@/components/AdminOverviewChart";
+import { SupportDashboard } from "@/components/support/SupportDashboard";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Building2, ShieldCheck, Plus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { SupportAdminOverviewChart } from "@/components/support/SupportAdminOverviewChart";
+import { SalesAdminOverviewChart } from "@/components/sales/SalesAdminOverviewChart";
+import { SalesDashboard } from "@/components/sales/SalesDashboard";
 
 export default function Dashboard() {
   const { user, loading, profile, isAdmin } = useAuth();
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeDept, setActiveDept] = useState<DepartmentCode>("financial");
   const [openEntry, setOpenEntry] = useState(false);
 
-  if (!loading && !user) return <Navigate to="/auth" replace />;
-
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center text-muted-foreground">در حال بارگذاری…</div>
+      <div className="grid min-h-screen place-items-center">
+        در حال بارگذاری…
+      </div>
     );
   }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  const userDepartment = profile?.department as DepartmentCode | undefined;
 
   return (
     <div dir="rtl" className="min-h-screen bg-background">
       <AppHeader />
+
       <main className="container py-8">
         {isAdmin ? (
-          <section>
-            <PageTitle
-              icon={<ShieldCheck className="h-6 w-6" />}
-              title="پنل مدیر — نمودارهای واحدها"
-              subtitle="با انتخاب هر واحد، نمودارهای آن واحد را ببینید."
-            />
-            <Tabs value={activeDept} onValueChange={(v) => setActiveDept(v as DepartmentCode)}>
-              <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5">
-                {DEPARTMENTS.map((d) => (
-                  <TabsTrigger
-                    key={d.code}
-                    value={d.code}
-                    className="data-[state=active]:gradient-primary data-[state=active]:text-primary-foreground rounded-lg border bg-card px-4 py-3"
-                  >
-                    {d.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {DEPARTMENTS.map((d) => (
-                <TabsContent key={d.code} value={d.code} className="mt-0">
-                  <DepartmentCharts department={d.code} />
-                </TabsContent>
-              ))}
-            </Tabs>
-          </section>
-        ) : profile?.department ? (
-          <section className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <PageTitle
-                icon={<Building2 className="h-6 w-6" />}
-                title={departmentLabel(profile.department)}
-                subtitle="نمای کلی، نمودارها و ثبت اطلاعات واحد شما"
-              />
-              <Button
-                onClick={() => setOpenEntry(true)}
-                size="lg"
-                className="gradient-primary text-primary-foreground hover:opacity-95 shadow-[var(--shadow-elegant)]"
-              >
-                <Plus className="ml-2 h-5 w-5" /> ثبت رکورد جدید
-              </Button>
-            </div>
-            <div key={refreshKey}>
-              <DepartmentCharts department={profile.department} />
-            </div>
-            <EntryPanel
-              department={profile.department}
-              userId={user!.id}
-              open={openEntry}
-              onOpenChange={setOpenEntry}
-              onSaved={() => setRefreshKey((k) => k + 1)}
-            />
-          </section>
+          <AdminDashboard
+            activeDept={activeDept}
+            onDeptChange={setActiveDept}
+          />
+        ) : userDepartment ? (
+          <UserDashboard
+            department={userDepartment}
+            userId={user.id}
+            refreshKey={refreshKey}
+            openEntry={openEntry}
+            onOpenEntryChange={setOpenEntry}
+            onSaved={() => setRefreshKey((k) => k + 1)}
+          />
         ) : (
-          <div className="card-elegant grid place-items-center px-6 py-16 text-center">
-            <p className="text-muted-foreground">واحد سازمانی شما هنوز تنظیم نشده است. لطفاً با مدیر سیستم تماس بگیرید.</p>
-          </div>
+          <EmptyDepartmentState />
         )}
       </main>
     </div>
   );
 }
 
-function PageTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+/* ---------------- Admin ---------------- */
+
+function AdminDashboard({
+  activeDept,
+  onDeptChange,
+}: {
+  activeDept: DepartmentCode;
+  onDeptChange: (department: DepartmentCode) => void;
+}) {
+  return (
+    <section className="space-y-8">
+      <PageTitle
+        icon={<ShieldCheck className="h-6 w-6" />}
+        title="پنل مدیریت سیستم"
+        subtitle="مشاهده و نظارت بر تمامی واحدهای سازمانی"
+      />
+
+      <Tabs
+        dir="rtl"
+        value={activeDept}
+        onValueChange={(value) => onDeptChange(value as DepartmentCode)}
+        className="w-full"
+      >
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-muted/50 p-1 sm:grid-cols-3 lg:grid-cols-5">
+          {DEPARTMENTS.map((department) => (
+            <TabsTrigger
+              key={department.code}
+              value={department.code}
+              className="rounded-md py-3 text-sm transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              {department.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+{activeDept === "support" ? (
+  <SupportAdminOverviewChart year="1405" />
+) : activeDept === "sales" ? (
+  <SalesAdminOverviewChart year="1405" />
+) : (
+  <AdminOverviewChart department={activeDept} year="1405" />
+)}
+
+      <div className="border-t border-border pt-8">
+        <PageTitle
+          icon={<Building2 className="h-6 w-6" />}
+          title={`جزئیات واحد ${departmentLabel(activeDept)}`}
+          subtitle="نمای تفصیلی اطلاعات واحد انتخاب‌شده"
+        />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeDept}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <DepartmentView department={activeDept} mode="admin" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Normal User ---------------- */
+
+function UserDashboard({
+  department,
+  userId,
+  refreshKey,
+  openEntry,
+  onOpenEntryChange,
+  onSaved,
+}: {
+  department: DepartmentCode;
+  userId: string;
+  refreshKey: number;
+  openEntry: boolean;
+  onOpenEntryChange: (open: boolean) => void;
+  onSaved: () => void;
+}) {
+if (department === "support" || department === "sales") {
+  return (
+    <section className="space-y-6">
+      <DepartmentView department={department} mode="user" />
+    </section>
+  );
+}
+
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageTitle
+          icon={<Building2 className="h-6 w-6" />}
+          title={departmentLabel(department)}
+          subtitle="نمای کلی و ثبت اطلاعات واحد شما"
+        />
+
+        <Button
+          onClick={() => onOpenEntryChange(true)}
+          size="lg"
+          className="gradient-primary"
+        >
+          <Plus className="ml-2 h-5 w-5" />
+          ثبت رکورد جدید
+        </Button>
+      </div>
+
+      <DepartmentView
+        key={refreshKey}
+        department={department}
+        mode="user"
+      />
+
+      <EntryPanel
+        department={department}
+        userId={userId}
+        open={openEntry}
+        onOpenChange={onOpenEntryChange}
+        onSaved={onSaved}
+      />
+    </section>
+  );
+}
+
+/* ---------------- Department Router ---------------- */
+
+function DepartmentView({
+  department,
+  mode,
+}: {
+  department: DepartmentCode;
+  mode: "admin" | "user";
+}) {
+  const isAdmin = mode === "admin";
+  debugger
+
+  switch (department) {
+    case "support":
+      return <SupportDashboard />;
+
+    case "sales":
+      return <SalesDashboard />;
+
+    default:
+      return (
+        <DepartmentCharts
+          department={department}
+          isAdmin={isAdmin}
+        />
+      );
+  }
+}
+
+/* ---------------- Shared UI ---------------- */
+
+function PageTitle({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: ReactNode;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div className="mb-6 flex items-start gap-3">
       <div className="grid h-11 w-11 place-items-center rounded-xl gradient-primary text-primary-foreground shadow-[var(--shadow-elegant)]">
         {icon}
       </div>
+
       <div>
         <h1 className="text-2xl font-extrabold">{title}</h1>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
+    </div>
+  );
+}
+
+function EmptyDepartmentState() {
+  return (
+    <div className="card-elegant grid place-items-center py-16 text-center">
+      <p className="text-muted-foreground">
+        واحد سازمانی شما تنظیم نشده است.
+      </p>
     </div>
   );
 }
